@@ -1,4 +1,4 @@
-#import boto3
+import boto3
 import argparse
 import os
 
@@ -24,13 +24,14 @@ def getEnv():
     return env_data
 
 
-#def copy(name):
-#    s3 = boto3.resource('s3')
+
+def copy(name):
+    s3 = boto3.resource("s3")
     #bucket=s3.Bucket
 
 args= getArgs()
 env= getEnv()
-
+copy("")
 
 print(args.source)
 print(env.source)
