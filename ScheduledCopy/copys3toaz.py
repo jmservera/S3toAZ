@@ -4,7 +4,7 @@ import os
 import logging
 from azure.storage.blob import BlockBlobService,BlobBlock
 
-def getArgs():
+def __getArgs():
     """Gets the needed values from the command line arguments"""
     parser= argparse.ArgumentParser("Copy S3 to Azure Storage")
     parser.add_argument('--source_bucket', type=str,help="The S3 bucket as in [BucketName]: https://[region like s3-eu-west-1].amazonaws.com/[bucketname]/[foldername]/[filename], can also be set by the [AWS_SOURCE_BUCKET] environment variable")
@@ -18,7 +18,7 @@ def getArgs():
     parser.add_argument('--test',type=str, help="test only")
     return parser.parse_args()
 
-def getEnv():
+def __getEnv():
     """Gets needed values from OS Environment"""
     class Object(object):
         pass
@@ -35,7 +35,7 @@ def getEnv():
     
     return env_data
 
-def merge(source,dest):
+def __merge(source,dest):
     """Merge two objects, it will update only the empty (None) attributes in [dest] from [source]
     """
     elements=vars(source)
@@ -46,21 +46,25 @@ def merge(source,dest):
     
     elements=vars(dest)
 
-def checkValues(obj):
+def __checkValues(obj):
     """Checks that all the needed values are filled and creates a warning if not"""
     elements=vars(obj)
+    allValues=True
     for element in elements:
         if elements[element]==None:
+            allValues=False
             logging.warning(element+" does not have a value.")
+    #if all needed values are not supplied exit
+    return allValues
 
-def initArgs():
-    args= getArgs()
-    env= getEnv()
-    merge(env,args)
-    checkValues(args)
+def __initArgs():
+    args= __getArgs()
+    env= __getEnv()
+    __merge(env,args)
+    __checkValues(args)
     return args
 
-def copy(args):
+def __copy(args):
     s3cli = boto3.resource("s3", aws_access_key_id=args.source_secret_id, aws_secret_access_key=args.source_secret_key)
     azblob= BlockBlobService(args.destination_account, args.destination_SAS)
 
@@ -82,6 +86,13 @@ def copy(args):
     azblob.put_block_list(args.destination_container,args.destination_file,blocks)
     print("Committed")
 
-args=initArgs()
+def __doCopyFromCmd():
+    args=__initArgs()
+    __copy(args)
 
-copy(args)
+def doCopy():
+    args=__getEnv()
+    if __checkValues(args):
+        __copy(args)
+
+if  __name__ =='__main__':__doCopyFromCmd()
