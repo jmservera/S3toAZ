@@ -2,15 +2,20 @@ import boto3
 import argparse
 import os
 import logging
+from azure.storage.blob import BlockBlobService,BlobBlock
 
 def getArgs():
     """Gets the needed values from the command line arguments"""
     parser= argparse.ArgumentParser("Copy S3 to Azure Storage")
-    parser.add_argument('-s','--source', type=str,help="The S3 bucket: https://[region like s3-eu-west-1].amazonaws.com/[bucketname]/[foldername]/[filename], can also be set by the [AWS_SOURCE] environment variable")
+    parser.add_argument('--source_bucket', type=str,help="The S3 bucket as in [BucketName]: https://[region like s3-eu-west-1].amazonaws.com/[bucketname]/[foldername]/[filename], can also be set by the [AWS_SOURCE_BUCKET] environment variable")
+    parser.add_argument('--source_file', type=str,help="The S3 bucket as in [foldername]/[filename]: https://[region like s3-eu-west-1].amazonaws.com/[bucketname]/[foldername]/[filename], can also be set by the [AWS_SOURCE_FILE] environment variable")
     parser.add_argument('--source_secret_id',type=str,help="The S3 SECRET ID, can also be set by the [AWS_SECRET_ID] environment variable")
     parser.add_argument('--source_secret_key',type=str,help="The S3 SECRET ACCESS KEY, can also be set by the [AWS_SECRET_ID] environment variable")
-    parser.add_argument('-d','--destination',type=str, help="The Azure Storage account, can also be set by the [AZ_DESTINATION] environment variable")
+    parser.add_argument('--destination_account',type=str, help="The Azure Storage account, can also be set by the [AZ_DESTINATION] environment variable")
     parser.add_argument('--destination_SAS',type=str, help="The Azure Storage SAS Token, can also be set by the [AZ_DESTINATION_SAS] environment variable")
+    parser.add_argument('--destination_container',type=str, help="The Azure Storage blob container, can also be set by the [AZ_DESTINATION_CONTAINER] environment variable")
+    parser.add_argument('--destination_file',type=str, help="The path to the destination file, can also be set by the [AZ_DESTINATION_FILE] environment variable")
+    parser.add_argument('--test',type=str, help="test only")
     return parser.parse_args()
 
 def getEnv():
@@ -19,11 +24,15 @@ def getEnv():
         pass
 
     env_data=Object()
-    env_data.source=os.environ.get("AWS_SOURCE")
+    env_data.source_bucket=os.environ.get("AWS_SOURCE_BUCKET")
+    env_data.source_file=os.environ.get("AWS_SOURCE_FILE")
     env_data.source_secret_id=os.environ.get('AWS_SECRET_ID')
     env_data.source_secret_key=os.environ.get('AWS_SECRET_ACCESS_KEY')
-    env_data.destination=os.environ.get("AZ_DESTINATION")
+    env_data.destination_account=os.environ.get("AZ_DESTINATION_ACCOUNT")
     env_data.destination_SAS=os.environ.get("AZ_DESTINATION_SAS")
+    env_data.destination_container=os.environ.get("AZ_DESTINATION_CONTAINER")
+    env_data.destination_file=os.environ.get("AZ_DESTINATION_FILE")
+    
     return env_data
 
 def merge(source,dest):
@@ -51,15 +60,28 @@ def initArgs():
     checkValues(args)
     return args
 
-def copy(name, args):
-    s3 = boto3.client("s3", aws_access_key_id=args.source_secret_id, aws_secret_access_key=args.source_secret_key)
-    #TODO: download to a stream
-    #with open('[filename]', 'wb') as f:
-    #    s3.download_fileobj('[bucket]', '[object]', f)
+def copy(args):
+    s3cli = boto3.resource("s3", aws_access_key_id=args.source_secret_id, aws_secret_access_key=args.source_secret_key)
+    azblob= BlockBlobService(args.destination_account, args.destination_SAS)
+
+    s3object=s3cli.Object(args.source_bucket, args.source_file)
+    
+    chunk=s3object.get(PartNumber=1)
+    nchunks=chunk['PartsCount']
+    blocks=[]
+
+    for x in range(1,nchunks+1):
+        chunk=s3object.get(PartNumber=x)
+        print("Reading part {0}/{1}".format(x,nchunks))
+        part=chunk['Body'].read()
+        print("Writing part {0}/{1}".format(x,nchunks))
+        azblob.put_block(args.destination_container,args.destination_file,part,str(x))
+        blocks.append(BlobBlock(id=str(x)))
+
+    print("Committing")
+    azblob.put_block_list(args.destination_container,args.destination_file,blocks)
+    print("Committed")
 
 args=initArgs()
 
-copy("test",args)
-
-print(args.source)
-print(args.source_secret_id)
+copy(args)

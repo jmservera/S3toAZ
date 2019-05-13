@@ -1,2 +1,2 @@
 boto3
-azure-mgmt-storage
+azure-storage-blob
