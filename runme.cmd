@@ -1,0 +1,1 @@
+docker run --env-file env.list s3toaz:0.1
