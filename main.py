@@ -15,7 +15,6 @@ def __getArgs():
     parser.add_argument('--destination_SAS',type=str, help="The Azure Storage SAS Token, can also be set by the [AZ_DESTINATION_SAS] environment variable")
     parser.add_argument('--destination_container',type=str, help="The Azure Storage blob container, can also be set by the [AZ_DESTINATION_CONTAINER] environment variable")
     parser.add_argument('--destination_file',type=str, help="The path to the destination file, can also be set by the [AZ_DESTINATION_FILE] environment variable")
-    parser.add_argument('--test',type=str, help="test only")
     return parser.parse_args()
 
 def __getEnv():
@@ -69,7 +68,7 @@ def __copy(args):
     azblob= BlockBlobService(args.destination_account, args.destination_SAS)
 
     s3object=s3cli.Object(args.source_bucket, args.source_file)
-    
+    print("Opening S3 object {0}/{1}".format(args.source_bucket, args.source_file))
     chunk=s3object.get(PartNumber=1)
     nchunks=chunk['PartsCount']
     blocks=[]
@@ -78,11 +77,11 @@ def __copy(args):
         chunk=s3object.get(PartNumber=x)
         print("Reading part {0}/{1}".format(x,nchunks))
         part=chunk['Body'].read()
-        print("Writing part {0}/{1}".format(x,nchunks))
+        print("Writing part {0}/{1}. Size: {2} bytes".format(x,nchunks,len(part)))
         azblob.put_block(args.destination_container,args.destination_file,part,str(x))
         blocks.append(BlobBlock(id=str(x)))
 
-    print("Committing")
+    print("Committing file {0}/{1}".format(args.destination_container, args.destination_file))
     azblob.put_block_list(args.destination_container,args.destination_file,blocks)
     print("Committed")
 
