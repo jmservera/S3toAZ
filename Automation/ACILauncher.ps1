@@ -29,7 +29,7 @@ try{
     echo "Previous execution log: " $formerLog
 }
 catch{
-    write-host $_.Exception.Message
+    write-error $_.Exception.Message
 }
 
 Remove-AzureRmContainerGroup -ResourceGroupName $rgName -Name $containername
