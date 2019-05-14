@@ -15,4 +15,4 @@ FROM base
 COPY --from=builder /install /usr/local
 ADD main.py /
 
-CMD ["python", "./main.py"]
+CMD ["python","-u", "./main.py"]
