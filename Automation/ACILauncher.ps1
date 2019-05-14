@@ -14,19 +14,29 @@ Param
 )
 
 $containername='scheduledcopycontainer'
+$rgName='testgroup1234'
+
 $Env=@{'AWS_SOURCE_BUCKET'=$AWS_SOURCE_BUCKET;'AWS_SOURCE_FILE'=$AWS_SOURCE_FILE;'AWS_SECRET_ID'=$AWS_SECRET_ID;'AWS_SECRET_ACCESS_KEY'=$AWS_SECRET_ACCESS_KEY;'AZ_DESTINATION_ACCOUNT'=$AZ_DESTINATION_ACCOUNT;'AZ_DESTINATION_SAS'=$AZ_DESTINATION_SAS;'AZ_DESTINATION_CONTAINER'=$AZ_DESTINATION_CONTAINER;'AZ_DESTINATION_FILE'=$AZ_DESTINATION_FILE }
 
 $Conn = Get-AutomationConnection -Name 'AzureRunAsConnection'
 
 Connect-AzureRmAccount -ServicePrincipal -Tenant $Conn.TenantID -ApplicationId $Conn.ApplicationID -CertificateThumbprint $Conn.CertificateThumbprint
 
-New-AzureRmResourceGroup -Name testgroup1234 -Location northeurope -Force
+New-AzureRmResourceGroup -Name $rgName -Location northeurope -Force
 
-Remove-AzureRmContainerGroup -ResourceGroupName testgroup1234 -Name $containername
+try{
+    $formerLog=Get-AzureRmContainerInstanceLog -ResourceGroupName $rgName -ContainerGroupName $containername
+    echo "Previous execution log: " $formerLog
+}
+catch{
+    write-host $_.Exception.Message
+}
+
+Remove-AzureRmContainerGroup -ResourceGroupName $rgName -Name $containername
 
 $credentials=Get-AzureRmContainerRegistryCredential -ResourceGroupName $ContainerRegistryGroupName -Name $ContainerRegistryName
 $secpasswd = ConvertTo-SecureString $credentials.Password -AsPlainText -Force
 $securecred = New-Object System.Management.Automation.PSCredential ($credentials.Username, $secpasswd)
-New-AzureRmContainerGroup  -ResourceGroupName testgroup1234 -Name $containername `
+New-AzureRmContainerGroup  -ResourceGroupName $rgName -Name $containername `
     -Image $ContainerImage -OsType Linux -DnsNameLabel aci-scheduled-copy10 `
     -RegistryCredential $securecred -RestartPolicy Never -EnvironmentVariable $Env
