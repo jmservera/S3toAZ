@@ -81,7 +81,7 @@ def __copy(args):
         print("Reading part {0}/{1}".format(x,nchunks))
         part=chunk['Body'].read()
         print("Writing part {0}/{1}. Size: {2} bytes".format(x,nchunks,len(part)))
-        blockid=uuid.uuid4()
+        blockid=str(uuid.uuid4())
         azblob.put_block(args.destination_container,args.destination_file,part,blockid)
         blocks.append(BlobBlock(id=blockid))
 
