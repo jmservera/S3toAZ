@@ -1,11 +1,11 @@
-FROM python:3.7-alpine as base
+FROM python:3.7-slim-stretch as base
 
 FROM base as builder
 
 RUN mkdir /install
 WORKDIR /install
 
-RUN apk --no-cache add gcc libffi-dev openssl-dev musl-dev
+RUN apt-get update && apt-get install -y gcc libffi-dev libssl-dev 
 
 ADD requirements.txt /
 RUN pip install --install-option="--prefix=/install" -r /requirements.txt

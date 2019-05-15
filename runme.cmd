@@ -1,3 +1,3 @@
-docker build . -t s3toaz:0.4 -t s3toaz:latest -t juanserv.azurecr.io:0.4 -t juanserv.azurecr.io:latest
+docker build . -t s3toaz:0.7 -t s3toaz:latest -t juanserv.azurecr.io/s3toaz:0.7 -t juanserv.azurecr.io/s3toaz:latest
 docker run --env-file env.list s3toaz:latest
-docker push
+docker push juanserv.azurecr.io/s3toaz

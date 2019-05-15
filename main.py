@@ -3,6 +3,8 @@ import argparse
 import os
 import logging
 from azure.storage.blob import BlockBlobService,BlobBlock
+import platform
+import datetime
 
 def __getArgs():
     """Gets the needed values from the command line arguments"""
@@ -86,8 +88,14 @@ def __copy(args):
     print("Committed")
 
 def __doCopyFromCmd():
-    args=__initArgs()
-    __copy(args)
+    try:
+        start=datetime.datetime.now()
+        print("Start: %s" % start)
+        print("Running in: %s" % (platform.platform()))
+        args=__initArgs()
+        __copy(args)
+    finally:
+        print("Ellapsed: %s" % (datetime.datetime.now()-start))
 
 def doCopy():
     args=__getEnv()

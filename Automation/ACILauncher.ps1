@@ -26,10 +26,10 @@ New-AzureRmResourceGroup -Name $rgName -Location northeurope -Force
 
 try{
     $formerLog=Get-AzureRmContainerInstanceLog -ResourceGroupName $rgName -ContainerGroupName $containername
-    echo "Previous execution log: " $formerLog
+    Write-Output "Previous execution log: " $formerLog
 }
 catch{
-    write-error $_.Exception.Message
+    Write-Error $_.Exception.Message
 }
 
 Remove-AzureRmContainerGroup -ResourceGroupName $rgName -Name $containername
@@ -40,3 +40,17 @@ $securecred = New-Object System.Management.Automation.PSCredential ($credentials
 New-AzureRmContainerGroup  -ResourceGroupName $rgName -Name $containername `
     -Image $ContainerImage -OsType Linux -DnsNameLabel aci-scheduled-copy10 `
     -RegistryCredential $securecred -RestartPolicy Never -EnvironmentVariable $Env
+
+do{
+    start-sleep -Seconds 5
+    $container=Get-AzureRmContainerGroup -ResourceGroupName $rgName -Name $containername
+    Write-Output ($container.State)
+}while( ($container.State -eq "Pending") -or ($container.State -eq "Running") )
+
+try{
+    $formerLog=Get-AzureRmContainerInstanceLog -ResourceGroupName $rgName -ContainerGroupName $containername
+    Write-Output "Current execution log: " $formerLog
+}
+catch{
+    Write-Error $_.Exception.Message
+}
