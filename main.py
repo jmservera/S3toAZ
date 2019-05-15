@@ -5,6 +5,7 @@ import logging
 from azure.storage.blob import BlockBlobService,BlobBlock
 import platform
 import datetime
+import uuid
 
 def __getArgs():
     """Gets the needed values from the command line arguments"""
@@ -80,8 +81,9 @@ def __copy(args):
         print("Reading part {0}/{1}".format(x,nchunks))
         part=chunk['Body'].read()
         print("Writing part {0}/{1}. Size: {2} bytes".format(x,nchunks,len(part)))
-        azblob.put_block(args.destination_container,args.destination_file,part,str(x))
-        blocks.append(BlobBlock(id=str(x)))
+        blockid=uuid.uuid4()
+        azblob.put_block(args.destination_container,args.destination_file,part,blockid)
+        blocks.append(BlobBlock(id=blockid))
 
     print("Committing file {0}/{1}".format(args.destination_container, args.destination_file))
     azblob.put_block_list(args.destination_container,args.destination_file,blocks)
