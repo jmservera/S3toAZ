@@ -303,6 +303,19 @@ function Create-ModuleImportMapOrder {
 
     } while ($null -ne $CurrentAutomationModuleList)
 
+
+    # Add ContainerInstance and ContainerRegistry Modules
+    if(!($ModuleImportMapOrder -match $script:AzureRMContainerInstance)){
+        $AzureRMCIEntry = $script:AzureRMContainerInstance
+        $AzureRMCIArray = ,$AzureRMCIEntry
+        $ModuleImportMapOrder += ,$AzureRMCIArray
+    }
+    if(!($ModuleImportMapOrder -match $script:AzureRMContainerRegistry)){
+        $AzureRMCREntry = $script:AzureRMContainerRegistry
+        $AzureRMCRArray = ,$AzureRMCREntry
+        $ModuleImportMapOrder += ,$AzureRMCRArray
+    }
+
     $ModuleImportMapOrder
 }
 
@@ -444,6 +457,7 @@ if ($Login) {
 }
 
 $ModuleImportMapOrder = Create-ModuleImportMapOrder
+
 Import-ModulesInAutomationAccordingToDependency $ModuleImportMapOrder 
 
 #endregion
