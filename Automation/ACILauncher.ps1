@@ -1,3 +1,7 @@
+#Requires -Modules AzureRM.ContainerInstance
+#Requires -Modules AzureRM.ContainerRegistry
+#Requires -Modules AzureRM.Profile
+
 Param
 (
     [String] $ContainerRegistryName,
